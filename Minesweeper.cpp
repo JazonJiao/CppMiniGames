@@ -20,7 +20,7 @@ Minesweeper::Minesweeper() : numMines(0), start(0), end(0) {
         }
     }
 
-    srand((unsigned)time(NULL));
+    srand((unsigned)time(nullptr));
     double rd;
     for (int i = 0; i < W; i++) {
         for (int j = 0; j < H; j++) {
@@ -45,7 +45,7 @@ Minesweeper::Minesweeper() : numMines(0), start(0), end(0) {
             "Good luck!\n\n";
     //gameover(); // for testing purpose
 
-    start = time(NULL);  // get current time
+    start = time(nullptr);  // get current time
     while (play());  // play the game until game over
 
 }
@@ -193,7 +193,7 @@ void Minesweeper::displayHS() {
 }
 
 void Minesweeper::gamewon() {
-    end = time(NULL);
+    end = time(nullptr);
     double diff = difftime(end, start);
     std::cout << "\nCongrats! You won the game!"
             "\nTime taken: " << diff << " s."
@@ -244,7 +244,7 @@ void Minesweeper::gamewon() {
 }
 
 void Minesweeper::gameover() {
-    end = time(NULL);
+    end = time(nullptr);
     double diff = difftime(end, start);
     std::cout << "\nSorry--You hit a bomb!! GAME OVER."
             "\nTime taken: " << diff << " s."

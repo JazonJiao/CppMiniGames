@@ -38,7 +38,10 @@ Maxim::Maxim() : curRow(LENGTH/2), curCol(LENGTH/2), curPlayer(1), score1(0), sc
     states[curRow][curCol] = P1;
 
     cout << "Welcome to Maxim! Enter Mode--\n"
-            "0, Zero-player; 1, Two Players; 2, One-player Easy; 3, One-player Hard: " << endl;
+            "0, Zero-player; \n"
+            "1, Two Players; \n"
+            "2, One-player Easy; \n"
+            "3, One-player Hard: " << endl;
     cin >> mode;
     //mode = 0;
     assert(mode >= 0 && mode < 4);
@@ -46,7 +49,7 @@ Maxim::Maxim() : curRow(LENGTH/2), curCol(LENGTH/2), curPlayer(1), score1(0), sc
         display();
         play();
     }
-
+    showResult();
 }
 
 // when displaying, to use Cartesian coordinates,

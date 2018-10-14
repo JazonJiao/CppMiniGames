@@ -10,8 +10,12 @@
 const int SIZE = 10; // size of the n by n board
 const int STEP = 5;  // the number of aligned pieces needed for winning
 
+
 class Gomoku {
 private:
+    enum state {
+        EMPTY, P1, P2
+    };
     state states[SIZE][SIZE];
     int curRow, curCol;
     bool curPlayer;
