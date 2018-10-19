@@ -11,7 +11,9 @@
 
 #define random(a, b) (rand() % (b-a+1) + a)
 
-using namespace std;
+using std::cout;
+using std::endl;
+using std::cin;
 
 // GAMEPLAY
 // the game is played on a 7 * 7 grid, each grid having a number initialized randomly from 0 to 9.
@@ -21,43 +23,68 @@ using namespace std;
 // Then the two players take turns to choose grids until all grids are chosen.
 // The player with a higher total score wins.
 // if one-player mode is chosen, computer is Player 1.
-Maxim::Maxim() : curRow(LENGTH/2), curCol(LENGTH/2), curPlayer(1), score1(0), score2(0) {
-    srand((unsigned)time(NULL));
-    for (int i = 0; i < LENGTH; i++) {
-        for (int j = 0; j < LENGTH; j++) {
+
+Maxim::Maxim() {
+    int mode, sqL, difficulty;
+    cout << "Welcome to Maxim! Enter Mode--\n"
+            "0, Zero-player; \n"
+            "1, One-Player; \n"
+            "2, Two players: \n";
+    cin >> mode;
+    assert(mode == 0 or mode == 1 or mode == 2);
+    cout << "\nChoose grid length "
+            "\n(must be 3, 5, 7, or 9): \n";
+    cin >> sqL;
+    assert(sqL > 2 and sqL < 10 and sqL % 2 == 1);
+
+    switch (mode) {
+        case 0: {
+            MaximZeroPlayer m0(sqL, 4);
+            break;
+        } case 1: {
+            cout << "\nChoose difficulty (Must be "
+                    "\nan even number less than grid size): \n";
+            cin >> difficulty;
+            assert(difficulty % 2 == 0 && difficulty < sqL);
+            MaximOnePlayer m1(sqL, difficulty);
+            break;
+        } case 2: {
+            MaximTwoPlayers m2(sqL);
+        }
+    }
+}
+
+
+MaximBase::MaximBase(int squareLength) :
+        curRow(squareLength / 2), curCol(squareLength / 2), curPlayer(true), score1(0), score2(0) {
+    srand((unsigned) time(nullptr));
+    for (int i = 0; i < MAXIMLENGTH; i++) {
+        for (int j = 0; j < MAXIMLENGTH; j++) {
             numbers[i][j] = random(0, 9);
         }
     }
-    //numbers[curRow][curCol] = 0;  // set central grid to be 0
-
-    for (int i = 0; i < LENGTH; i++) {
-        for (int j = 0; j < LENGTH; j++) {
+    numbers[curRow][curCol] = 0;  // set central grid to be 0
+    for (int i = 0; i < MAXIMLENGTH; i++) {
+        for (int j = 0; j < MAXIMLENGTH; j++) {
             states[i][j] = EMPTY;
         }
     }
     states[curRow][curCol] = P1;
+    //while (play());  // fixme: is this undefined?
+}
 
-    cout << "Welcome to Maxim! Enter Mode--\n"
-            "0, Zero-player; \n"
-            "1, Two Players; \n"
-            "2, One-player Easy; \n"
-            "3, One-player Hard: " << endl;
-    cin >> mode;
-    //mode = 0;
-    assert(mode >= 0 && mode < 4);
-    while (not finished()) {
-        display();
-        play();
-    }
-    showResult();
+void MaximBase::mark(int row, int col) {
+    states[row][col] = curPlayer ? P2 : P1;
+    if (!curPlayer) score1 += numbers[row][col];
+    else score2 += numbers[row][col];
 }
 
 // when displaying, to use Cartesian coordinates,
 // the row and column are swapped and flipped
-void Maxim::display() const {
+void MaximBase::display() const {
     cout << "^ y-axis" << endl;
-    for (int i = LENGTH - 1; i >= 0; i--) {
-        for (int j = 0; j < LENGTH; j++) {
+    for (int i = squareLength - 1; i >= 0; i--) {
+        for (int j = 0; j < squareLength; j++) {
             if (states[j][i] == EMPTY) {
                 cout << "|" << numbers[j][i];
             } else if (states[j][i] == P1) {
@@ -73,14 +100,8 @@ void Maxim::display() const {
             cout << "-> x-axis\n";
         }
     }
-    cout << "Current Grid: " << curRow << "," << curCol << "; Current Player: " << curPlayer+1;
+    cout << "Current Grid: " << curRow << "," << curCol << "; Current Player: " << curPlayer + 1;
     cout << "\nScores--Player 1: " << score1 << "; Player 2: " << score2 << endl;
-}
-
-void Maxim::mark(int row, int col) {
-    states[row][col] = curPlayer ? P2 : P1;
-    if ( ! curPlayer) score1 += numbers[row][col];
-    else score2 += numbers[row][col];
 }
 
 //void Maxim::mark2(int row, int col) {
@@ -88,49 +109,71 @@ void Maxim::mark(int row, int col) {
 //    score2 += numbers[row][col];
 //}
 
-// mode 0: player 1 is hard, player 2 is easy
-// mode 1: 2-player; mode 2: one-player easy; mode 3: one-player hard
-void Maxim::play() {
-    if ((mode != 1 && !curPlayer) || mode == 0) {      // the computer plays
-        int coord;
-        if (mode == 2 || (mode == 0 && curPlayer))
-            coord = chooseGridEasy(curRow, curCol);
-        else
-            coord = chooseGridHard(curRow, curCol, 4);
-        curRow = coord / 100; curCol = coord % 100;
-        mark(curRow, curCol);
-        display();
-    } else {
-        int row, col;
-        bool valid = false;
-        while (!valid) {
-            cout << "\nPlayer " << curPlayer+1 << ", enter your next move: ";
-            cin >> row >> col;
-            if (isValid(row, col)) {
-                valid = true;
-            } else {
-                cout << "Invalid input; try again!\n";
-            }
-        }
-        curRow = row; curCol = col;  // assign inputs
-        mark(curRow, curCol);
-        display();
-        cout << endl;
-    }
-    curPlayer = !curPlayer;   // flip turns
+// ************************************ play() methods
+
+bool MaximZeroPlayer::play() {
+    computerChooses();
+    display();
+    curPlayer = not curPlayer;   // flip turns
+    return not gameOver();
 }
+
+bool MaximOnePlayer::play() {
+    if (curPlayer) {
+        playerChooses();
+    } else {
+        computerChooses();
+    }
+    display();
+    curPlayer = not curPlayer;   // flip turns
+    return not gameOver();
+}
+
+bool MaximTwoPlayers::play() {
+    playerChooses();
+    display();
+    curPlayer = not curPlayer;   // flip turns
+    return not gameOver();
+}
+
+//
+void MaximAuto::computerChooses() {
+    int coord = chooseGrid(curRow, curCol, difficulty);
+    curRow = coord / 100;
+    curCol = coord % 100;
+    mark(curRow, curCol);
+}
+
+void MaximBase::playerChooses() {
+    int row, col;
+    bool valid = false;
+    while (!valid) {
+        cout << "\nPlayer " << curPlayer + 1 << ", enter your next move: ";
+        cin >> row >> col;
+        if (isValid(row, col)) {
+            valid = true;
+        } else {
+            cout << "Invalid input; try again!\n";
+        }
+    }
+    curRow = row;
+    curCol = col;  // assign inputs
+    mark(curRow, curCol);
+    cout << endl;
+}
+
 
 // tests whether the grid coordinates the user enters is valid
 // the user's grid should be on the same row or column as the current grid
 // if all grids on the row or column are occupied, the user can choose from any remaining grid
-bool Maxim::isValid(int row, int col) {
-    if (row >= LENGTH || row < 0 || col >= LENGTH || col < 0)
+bool MaximBase::isValid(int row, int col) {
+    if (row >= squareLength || row < 0 || col >= squareLength || col < 0)
         return false;
     bool hasEmpty = false;              // whether there are empty grids on the same row/col
-    for (int i = 0; i < LENGTH; i++) {
+    for (int i = 0; i < squareLength; i++) {
         if (states[curRow][i] == EMPTY) hasEmpty = true;
     }
-    for (int i = 0; i < LENGTH; i++) {
+    for (int i = 0; i < squareLength; i++) {
         if (states[i][curCol] == EMPTY) hasEmpty = true;
     }
     if (hasEmpty) {
@@ -140,45 +183,12 @@ bool Maxim::isValid(int row, int col) {
     }
 }
 
-// easy algorithm: one-ply (search for the largest number available)
-// if game is over, return -1 (should not happen);
-// else returns a three-digit number; the first digit is row, last is col
-int Maxim::chooseGridEasy(int row, int col) {
-    int curBiggest = -1;
-    int ansRow = row, ansCol = col;
-    for (int i = 0; i < LENGTH; i++) {
-        if (states[row][i] == EMPTY && numbers[row][i] > curBiggest) {
-            curBiggest = numbers[row][i];
-            ansCol = i;   // row already == curRow
-        }
-    }
-    for (int i = 0; i < LENGTH; i++) {
-        if (states[i][col] == EMPTY && numbers[i][col] > curBiggest) {
-            curBiggest = numbers[i][col];
-            ansCol = col;   // resets column chosen
-            ansRow = i;
-        }
-    }
-    if (curBiggest == -1) {   // there are no empty grids on same row/col
-        for (int i = 0; i < LENGTH; i++) {
-            for (int j = 0; j < LENGTH; j++) {
-                if (states[i][j] == EMPTY && numbers[i][j] > curBiggest) {
-                    curBiggest = numbers[i][j];
-                    ansRow = i; ansCol = j;
-                }
-            }
-        }
-    }
-    if (curBiggest == -1)
-        return -1;
-    else
-        return ansRow * 100 + ansCol;
-}
 
 // helper recursive method for chooseGridHard()
 // returns the total net points after a certain iteration of optimized plays,
 // not including the point of the first grid that's passed from outside
-int Maxim::calcPoints(int row, int col, int iter) {
+// iter is the number of iterations (n-ply) for how deep the algorithm goes; should be even
+int MaximAuto::calcPoints(int row, int col, int iter) {
     if (iter == 0) {
         return 0;
     } else {
@@ -202,11 +212,12 @@ int Maxim::calcPoints(int row, int col, int iter) {
 }
 
 // iter is the number of iterations (n-ply) for how deep the algorithm goes; should be even
-int Maxim::chooseGridHard(int row, int col, int iter) {   // modified from chooseGridEasy()
-    int score = 0, curBiggest = -1000;
+int MaximAuto::chooseGrid(int row, int col, int iter) {   // modified from chooseGridEasy()
+    int NONE = -1000;
+    int score = 0, curBiggest = NONE;
     int ansRow = row, ansCol = col;
 
-    for (int i = 0; i < LENGTH; i++) {
+    for (int i = 0; i < squareLength; i++) {
         if (states[row][i] == EMPTY) {
             score = numbers[row][i] + calcPoints(row, i, iter);
             //cout << row << " " << i << " " << score << endl;
@@ -216,7 +227,7 @@ int Maxim::chooseGridHard(int row, int col, int iter) {   // modified from choos
             }
         }
     }
-    for (int i = 0; i < LENGTH; i++) {
+    for (int i = 0; i < squareLength; i++) {
         if (states[i][col] == EMPTY) {
             score = numbers[i][col] + calcPoints(i, col, iter);
             //cout << i << " " << col << " " << score << endl;
@@ -227,43 +238,158 @@ int Maxim::chooseGridHard(int row, int col, int iter) {   // modified from choos
             }
         }
     }
-    if (curBiggest == -1000) {   // there are no empty grids on same row/col
-        for (int i = 0; i < LENGTH; i++) {
-            for (int j = 0; j < LENGTH; j++) {
+    if (curBiggest == NONE) {   // there are no empty grids on same row/col
+        for (int i = 0; i < squareLength; i++) {
+            for (int j = 0; j < squareLength; j++) {
                 if (states[i][j] == EMPTY) {
                     score = numbers[i][j] + calcPoints(i, j, iter);
                     //cout << i << " " << j << " " << score << endl;
                     if (score > curBiggest) {
                         curBiggest = score;
-                        ansRow = i; ansCol = j;
+                        ansRow = i;
+                        ansCol = j;
                     }
                 }
             }
         }
     }
-    assert(curBiggest != -1000);
+    assert(curBiggest != NONE);
     return ansRow * 100 + ansCol;
 }
 
-bool Maxim::finished() const {
-    for (int i = 0; i < LENGTH; i++) {
-        for (int j = 0; j < LENGTH; j++) {
+
+// easy algorithm: one-ply (search for the largest number available)
+// if game is over, return -1 (should not happen);
+// else returns a three-digit number; the first digit is row, last is col
+int MaximAuto::chooseGridEasy(int row, int col) {
+    int curBiggest = -1;
+    int ansRow = row, ansCol = col;
+    for (int i = 0; i < squareLength; i++) {
+        if (states[row][i] == EMPTY && numbers[row][i] > curBiggest) {
+            curBiggest = numbers[row][i];
+            ansCol = i;   // row already == curRow
+        }
+    }
+    for (int i = 0; i < squareLength; i++) {
+        if (states[i][col] == EMPTY && numbers[i][col] > curBiggest) {
+            curBiggest = numbers[i][col];
+            ansCol = col;   // resets column chosen
+            ansRow = i;
+        }
+    }
+    if (curBiggest == -1) {   // there are no empty grids on same row/col
+        for (int i = 0; i < squareLength; i++) {
+            for (int j = 0; j < squareLength; j++) {
+                if (states[i][j] == EMPTY && numbers[i][j] > curBiggest) {
+                    curBiggest = numbers[i][j];
+                    ansRow = i;
+                    ansCol = j;
+                }
+            }
+        }
+    }
+    if (curBiggest == -1)
+        return -1;
+    else
+        return ansRow * 100 + ansCol;
+}
+
+bool MaximBase::gameOver() const {
+    for (int i = 0; i < squareLength; i++) {
+        for (int j = 0; j < squareLength; j++) {
             if (states[i][j] == EMPTY) return false;
         }
     }
     return true;
 }
 
-void Maxim::showResult() const {   // to add bookmark, use ctrl + shift + num
+void MaximBase::gameEnd() const {  // to add bookmark, use ctrl + shift + num
     cout << "GAME OVER!";
-    if (score1 != score2) cout << " Player " << (score1 > score2 ? 1 : 2) << " wins!\n";
-    else cout << " It's a tie!\n";
+    if (score1 != score2)
+        cout << " Player " << (score1 > score2 ? 1 : 2) << " wins!\n";
+    else
+        cout << " It's a tie!\n";
 }
 
-void Maxim::outputResult(ofstream & file) {
+void MaximBase::outputResult(std::ofstream &file) const {
     file << "Player 1 score: " << score1 << ";\tPlayer 2 score: " << score2 <<
-           ";\tDifference: " << score1 - score2 << endl;
+         ";\tDifference: " << score1 - score2 << endl;
 }
+
+// mode 0: player 1 is hard, player 2 is easy
+// mode 1: 2-player; mode 2: one-player easy; mode 3: one-player hard
+//void Maxim::play() {
+//    if ((mode != 1 && !curPlayer) || mode == 0) {      // the computer plays
+//        int coord;
+//        if (mode == 2 || (mode == 0 && curPlayer))
+//            coord = chooseGridEasy(curRow, curCol);
+//        else
+//            coord = chooseGridHard(curRow, curCol, 4);
+//        curRow = coord / 100; curCol = coord % 100;
+//        mark(curRow, curCol);
+//        display();
+//    } else {
+//        int row, col;
+//        bool valid = false;
+//        while (!valid) {
+//            cout << "\nPlayer " << curPlayer+1 << ", enter your next move: ";
+//            cin >> row >> col;
+//            if (isValid(row, col)) {
+//                valid = true;
+//            } else {
+//                cout << "Invalid input; try again!\n";
+//            }
+//        }
+//        curRow = row; curCol = col;  // assign inputs
+//        mark(curRow, curCol);
+//        display();
+//        cout << endl;
+//    }
+//    curPlayer = !curPlayer;   // flip turns
+//}
+
+/*Point MaximBase::chooseGrid(int row, int col, int iter) {
+    int score = 0, curBiggest = -1000;
+    Point point(-1, -1);
+
+    for (int i = 0; i < squareLength; i++) {
+        if (states[row][i] == EMPTY) {
+            score = numbers[row][i] + calcPoints(row, i, iter);
+            //cout << row << " " << i << " " << score << endl;
+            if (score > curBiggest) {
+                curBiggest = score;
+                point.col = i;   // row already == curRow
+            }
+        }
+    }
+    for (int i = 0; i < squareLength; i++) {
+        if (states[i][col] == EMPTY) {
+            score = numbers[i][col] + calcPoints(i, col, iter);
+            //cout << i << " " << col << " " << score << endl;
+            if (score > curBiggest) {
+                curBiggest = score;
+                point.col = col;   // resets column chosen
+                point.row = i;
+            }
+        }
+    }
+    if (curBiggest == -1000) {   // there are no empty grids on same row/col
+        for (int i = 0; i < squareLength; i++) {
+            for (int j = 0; j < squareLength; j++) {
+                if (states[i][j] == EMPTY) {
+                    score = numbers[i][j] + calcPoints(i, j, iter);
+                    //cout << i << " " << j << " " << score << endl;
+                    if (score > curBiggest) {
+                        curBiggest = score;
+                        point.row = i; point.col = j;
+                    }
+                }
+            }
+        }
+    }
+    assert(curBiggest != -1000);
+    return point;
+}*/
 
 //void Maxim::play() {
 //    if ((mode != 1 && !curPlayer) || mode == 0) {      // the computer plays
