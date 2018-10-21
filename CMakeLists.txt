@@ -1,19 +1,12 @@
-cmake_minimum_required(VERSION 3.12)
-project(CppMiniGames)
+cmake_minimum_required(VERSION 3.9)
+project(GAMES-orig)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 11)
 
-include_directories(.)
-
-add_executable(CppMiniGames
-    Gomoku.cpp
-    Gomoku.h
-    main.cpp
-    Maxim.cpp
-    Maxim.h
-    Minesweeper.cpp
-    Minesweeper.h
-    STB.cpp
-    STB.h
-    ThreeMensMorris.cpp
-    ThreeMensMorris.h)
+add_executable(Maxim main.cpp Maxim.cpp Maxim.h
+        Gomoku.cpp Gomoku.h
+        ThreeMensMorris.cpp ThreeMensMorris.h
+        Minesweeper.cpp Minesweeper.h
+        #Genetic.cpp Genetic.h DNA.cpp DNA.h
+        STB.cpp STB.h
+        Sudoku.cpp Sudoku.h G2048.cpp G2048.h)

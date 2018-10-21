@@ -1,5 +1,8 @@
 /**** SUDOKU
  * This is the first game implemented with exhaustive Javadoc documentation.
+ * Functionality:
+ * 1. User can fill in the puzzle by entering coordinates and number through console;
+ * 2. User can let the AI solve the puzzle.
  */
 
 #ifndef GAMES_ORIG_SUDOKU_H
@@ -12,6 +15,12 @@ const int SUDOKULEN = 9;
 
 class Sudoku {
 public:
+    /*** 2018-10-19
+     * Constructor
+     * Asks the user if they want to solve the puzzle on their own.
+     * If so, run the program until the puzzle is solved by user.
+     * Otherwise, solve with AI and display the result.
+     */
     Sudoku();
 
 private: // private variables
@@ -26,7 +35,7 @@ private: // private variables
      * It seems to be the issue with project directory, but if I only keep the
      * file name, it cannot be loaded.
      */
-    const std::string FILENAME = "D:\\2018\\CS2201\\Maxim\\Sudoku2.txt";
+    const std::string FILENAME = "../Sudoku/Sudoku3.txt";
 
     /***
      * A 9x9 grid, with value 1~9, or 0 if it's empty.
@@ -101,9 +110,31 @@ private:  // private methods
      *
      * @return true if the puzzle is solved, i.e. no block is EMPTY.
      * If any entry is invalid, should be taken care by isValid()
+     * Scans the grid from bottom right to top left to save time for AI solver,
+     * which fills the grid from top left to bottom right.
      */
     bool solved() const;
 
+    /**********************
+     * Now for the AI part...
+     */
+
+    /*** 2018-10-19
+     * Solves the Sudoku puzzle using simple backtracking.
+     * Should always return true if the puzzle is a valid Sudoku puzzle.
+     * Solves from left to right, and from the top down.
+     * coord is row * 9 + col, so when calling solver(coord + 1),
+     * it solves from the next column in the same row, or the first column in the next row.
+     */
+    bool solver(int coord);
+
+    /*** 2018-10-19
+     * Set the corresponding grid to the number; or remove it, resetting it to 0.
+     * Update the state of that grid to be FILLED / EMPTY as well.
+     * No validity-checking performed since it's used by the AI solver.
+     */
+    void set(int row, int col, int n);
+    void remove(int row, int col);
 };
 
 

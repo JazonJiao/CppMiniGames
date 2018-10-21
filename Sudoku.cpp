@@ -1,6 +1,3 @@
-//
-// Created by 焦玉华 on 2018-10-17.
-//
 
 #include <fstream>
 #include <cassert>
@@ -9,17 +6,35 @@
 using std::cin;
 using std::cout;
 
+// static variable to keep track of # of operations performed in the AI solver
+static int SudokuSolverCount = 0;
+
 Sudoku::Sudoku() {
     readGrid();
-    cout << "\n---Welcome to Mine Sweeper!--- \n"
-            "For each round, please enter 3 numbers:\n"
-            "#1 for row number, #2 for columnnumber,\n"
-            "#3 for one of 1~9 you want to put in,\n"
-            "   or 0 if you want to erase it.\n"
-            "Good luck!\n\n";
-    while (play());
+    int choice;
     display();
-    cout << "\nCongrats! You solved the puzzle!\n";
+    cout << "\n---Welcome to Sudoku!--- \n"
+            "Enter 0 to play, 1 to solve with AI:\n";
+    cin >> choice;
+    if (choice == 0) {
+        cout << "For each round, please enter 3 numbers:\n"
+                "#1 for row number, #2 for columnnumber,\n"
+                "#3 for one of 1~9 you want to put in,\n"
+                "   or 0 if you want to erase it.\n"
+                "Good luck!\n\n";
+        while (play());
+        display();
+        cout << "\nCongrats! You solved the puzzle!\n";
+    } else {
+        if (solver(0)) {
+            display();
+            cout << "\nPuzzle is solved by AI!\n"
+                    "Number of searches performed: " << SudokuSolverCount << '\n';
+        } else {
+            display();
+            cout << "\n Failed to solve puzzle.\n";
+        }
+    }
 }
 
 void Sudoku::readGrid() {
@@ -145,11 +160,44 @@ bool Sudoku::play() {
 }
 
 bool Sudoku::solved() const {
-    for (int i = 0; i < SUDOKULEN; ++i) {
-        for (int j = 0; j < SUDOKULEN; ++j) {
+    for (int i = SUDOKULEN - 1; i >= 0; --i) {
+        for (int j = SUDOKULEN - 1; j >= 0; --j) {
             if (states[i][j] == EMPTY)
                 return false;
         }
     }
     return true;
+}
+
+bool Sudoku::solver(int coord) {
+    if (coord == SUDOKULEN * SUDOKULEN) // base case, coord reaches 81
+        return true;
+    int row = coord / SUDOKULEN;
+    int col = coord % SUDOKULEN;
+    if (states[row][col] == EMPTY) {
+        // for each grid, try each number from 1 to 9
+        for (int i = 1; i <= SUDOKULEN; ++i) {
+            if (isValid(row, col, i)) {
+                ++SudokuSolverCount; // Just for fun
+
+                set(row, col, i);
+                if (solver(coord + 1))
+                    return true;
+                remove(row, col);
+            }
+        }
+    } else {
+        return solver(coord + 1);
+    }
+    return false;
+}
+
+void Sudoku::set(int row, int col, int n) {
+    grid[row][col] = n;
+    states[row][col] = FILLED;
+}
+
+void Sudoku::remove(int row, int col) {
+    grid[row][col] = 0;
+    states[row][col] = EMPTY;
 }

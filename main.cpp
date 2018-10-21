@@ -9,11 +9,9 @@
 #include "G2048.h"
 
 void test() {
-    enum junk {A = 1, B = 2, C = 100};
-    std::random_device rd;
-    std::mt19937 rng(rd());
-    for (int i = 0 ; i < 40; ++i)
-        std::cout << rng() / (double) UINT32_MAX << '\n';
+    int i = 2, j = 3;
+    i += j *= 2;
+    std::cout << i << " " << j;
 }
 
 int main() {
@@ -48,6 +46,7 @@ int main() {
             break;
         } case 6: {
             Sudoku sudoku;
+            break;
         } case 7: {
             G2048 g2048;
         }
