@@ -9,4 +9,4 @@ add_executable(Maxim main.cpp Maxim.cpp Maxim.h
         Minesweeper.cpp Minesweeper.h
         #Genetic.cpp Genetic.h DNA.cpp DNA.h
         STB.cpp STB.h
-        Sudoku.cpp Sudoku.h G2048.cpp G2048.h)
+        Sudoku.cpp Sudoku.h G2048.cpp G2048.h Chomp.cpp Chomp.h)

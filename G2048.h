@@ -1,6 +1,6 @@
 /**** 2048
  * Functionality:
- * 1. User can play the game 2048 up to the point when 2048 is generated (or when s/he loses).
+ * 1. User can play the game 2048 even after 2048 is reached, until s/he loses.
  * 2. (New!) User can reverse steps as far back as s/he wants.
  * 3. todo: AI SOLVER
  */
@@ -10,14 +10,23 @@
 
 const int LEN_2048 = 4;
 
+/***
+ * Used for storing the history of grids, so user can reverse steps
+ */
 struct Node2048 {
     int grids[LEN_2048][LEN_2048];
+    int nEmpty;  /// Error log: forgetting this caused errors
     Node2048* next;
 };
 
 class G2048 {
 public:
     G2048();
+
+    /*** 2018-10-21
+     * Don't forget to free the linked list
+     */
+    ~G2048();
 
 private:
     /***
@@ -49,15 +58,21 @@ private:
     const double PROB_4 = 0.05;
 
     /***
-     * A stack-like linked list, with head pointing to the last grid.
+     * A stack-like linked list, with head pointing to the latest grid.
      * The tail of the list is the grid before the first round, containing only 2 numbers.
      */
     Node2048* head;
 
     /***
-     * Useless variable to keep track of number of rounds played
+     * Useless variable to keep track of number of rounds played (and # of nodes in linked list + 1)
      */
     int rounds;
+
+    /***
+     * This variable is set to true at the start, and set to false when 2048 is reached.
+     * That will prevent the program from keeping to call gameWon() after 2048 is reached.
+     */
+    bool notWon;
 
 private:
 
@@ -124,18 +139,25 @@ private:
     bool mergeL();
     bool mergeR();
 
-    /*** 2018-10-19
+    /*** 2018-10-19,21
      * lost() returns true if no grid is empty and no adjacent grid holds the same number.
-     * won() returns true if there is a 2048 grid anywhere.
+     * won() returns true if there is a 2048 grid anywhere; if so, set notWon to false.
      */
     bool lost() const;
-    bool won() const;
+    bool won();
 
-    /*** 2018-10-19
-     * Displays endgame information if game is lost / won
+    /*** 2018-10-21
+     * After lost() returned true, ask the user whether to reverse one round
+     * Return true if user does (then the previous step is recovered and game continues),
+     * false otherwise (then program ends).
      */
-    void gameLost() const;
-    void gameWon() const;
+    bool gameLost();
+
+    /*** 2018-10-21
+     * 2048 is reached.
+     * Return true if user wants to keep playing, false otherwise.
+     */
+    bool gameWon() const;
 
     /*** 2018-10-20
      * A function that enables reversing steps.
@@ -144,12 +166,16 @@ private:
     void logProgress();
 
     /*** 2018-10-20
-     * Reverse one round. Pop the head of linked list of past grids, and delete the head.
+     * Restore the grid and numEmpty in the previous step.
+     * Pop the head of linked list of past grids, and delete the head.
      * Return false if already reached the first round,
      * i.e., head contains the grid after the initial grid is generated.
      */
     bool reverse();
 
+    /***
+     * I can actually get a decent score just by entering ssadssadssad...
+     */
     //bool autoplay();
 };
 

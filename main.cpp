@@ -7,6 +7,7 @@
 #include "STB.h"
 #include "Sudoku.h"
 #include "G2048.h"
+#include "Chomp.h"
 
 void test() {
     int i = 2, j = 3;
@@ -25,7 +26,8 @@ int main() {
                  "4: Minesweeper\n"
                  "5: Shut The Box\n"
                  "6: Sudoku\n"
-                 "7: 2048\n";
+                 "7: 2048\n"
+                 "8: Chomp\n";
     int choice;
     std::cin >> choice;
     switch (choice) {
@@ -49,6 +51,10 @@ int main() {
             break;
         } case 7: {
             G2048 g2048;
+            break;
+        } case 8: {
+            Chomp chomp;
+            break;
         }
         //default:
         //    std::cout << "Invalid input. Program exits.\n";

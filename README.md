@@ -8,5 +8,6 @@ In chronological order, they are:
 5. Shut The Box, 10/2018
 6. Sudoku, 10/2018
 7. 2048, 10/2018
+8. Chomp, 10/2018
 
 The first few games were not super well written, and you can see how my programming skillset developed over time as I try to refine my program's structure and apply more complex techniques. 

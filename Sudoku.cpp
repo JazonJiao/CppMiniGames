@@ -105,17 +105,15 @@ bool Sudoku::isValid(int row, int col, int n) const {
     if (states[row][col] == GIVEN)
         return false;
 
-    if (n == 0)  // there may be many empty blocks...
+    if (n == 0)  // user wants to reset it. There may be many empty blocks...
         return true;
 
     for (int j = 0; j < SUDOKULEN; ++j) {
-        //cout << grid[row][j];
         if (grid[row][j] == n)
             return false;
     }
 
     for (int i = 0; i < SUDOKULEN; ++i) {
-        //cout << grid[i][col];
         if (grid[i][col] == n)
             return false;
     }

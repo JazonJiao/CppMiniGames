@@ -31,10 +31,6 @@ private: // private variables
      */
     enum state {GIVEN, EMPTY, FILLED};
 
-    /***
-     * It seems to be the issue with project directory, but if I only keep the
-     * file name, it cannot be loaded.
-     */
     const std::string FILENAME = "../Sudoku/Sudoku3.txt";
 
     /***

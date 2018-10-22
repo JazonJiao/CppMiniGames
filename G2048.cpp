@@ -12,7 +12,7 @@ using std::cout;
 using std::cin;
 
 G2048::G2048() : numEmpty(LEN_2048 * LEN_2048), addedScore(0), score(0),
-                 head(nullptr), rounds(0) {
+                 head(nullptr), rounds(0), notWon(true) {
     for (int i = 0; i < LEN_2048; ++i) {
         for (int j = 0; j < LEN_2048; ++j)
             grid[i][j] = 0;
@@ -27,6 +27,15 @@ G2048::G2048() : numEmpty(LEN_2048 * LEN_2048), addedScore(0), score(0),
     logProgress();
 
     while (play());
+}
+
+G2048::~G2048() {
+    Node2048* tmp;
+    while (head != nullptr) {
+        tmp = head;
+        head = head->next;
+        delete tmp;
+    }
 }
 
 void G2048::display() const {
@@ -71,6 +80,7 @@ bool G2048::play() {
         cout << "Invalid move. Try again: \n";
         return true;
     }
+    // user reverses a round, and this reverse is valid
     if (choice == 'r' or choice == 'R') {
         display();
         return true;
@@ -82,18 +92,19 @@ bool G2048::play() {
     display();
     logProgress();
 
+    if (notWon) {
+        if (won()) {
+            return gameWon();
+        }
+    }
     if (lost()) {
-        gameLost();
-        return false;
-    } else if (won()) {
-        gameWon();
-        return false;
+        return gameLost();
     }
     return true;
 }
 
 void G2048::generate() {
-    // first construct an array that stores the empty grids' coordinates.
+    // first construct a dynamic array that stores the empty grids' coordinates.
     // coordinate = row * 4 + col, ranging from 0 to 15.
     int *emptys(new int[numEmpty]);
     int k = 0;
@@ -123,6 +134,8 @@ void G2048::generate() {
         }
     }
     --numEmpty;
+    /// Error log: don't forget this!
+    delete [] emptys;
 }
 
 bool G2048::move(char choice) {
@@ -323,25 +336,42 @@ bool G2048::lost() const {
     return true;
 }
 
-bool G2048::won() const {
+bool G2048::won() {
     for (int i = 0; i < LEN_2048; ++i) {
-        for (int j = 0; j < LEN_2048; ++j)
-            if (grid[i][j] == 2048)
+        for (int j = 0; j < LEN_2048; ++j) {
+            if (grid[i][j] == 2048) {
+                notWon = false;
                 return true;
+            }
+        }
     }
     return false;
 }
 
-void G2048::gameLost() const {
-    cout << "Sorry, you lost! \n";
+bool G2048::gameLost() {
+    cout << "Sorry, you lost! \n"
+            "Do you want to revert one step? (Y/N): ";
+    char choice;
+    cin >> choice;
+    if (choice == 'n' or choice == 'N') {
+        return false;
+    }
+    reverse();
+    display();
+    return true;
 }
 
-void G2048::gameWon() const {
-    cout << "Congrats, you won! \n";
+bool G2048::gameWon() const {
+    cout << "Congrats, you won! \n"
+            "Do you want to keep playing? (Y/N): ";
+    char choice;
+    cin >> choice;
+    return (choice == 'y' or choice == 'Y');
 }
 
 void G2048::logProgress() {
     auto tmp = new Node2048;
+    tmp->nEmpty = numEmpty;
     for (int i = 0; i < LEN_2048; ++i)
         for (int j = 0; j < LEN_2048; ++j)
             tmp->grids[i][j] = grid[i][j];
@@ -360,9 +390,11 @@ bool G2048::reverse() {
     // don't forget to update rounds
     --rounds;
     // reassign current grid to the previous grid
+    numEmpty = head->nEmpty;
     for (int i = 0; i < LEN_2048; ++i)
         for (int j = 0; j < LEN_2048; ++j)
             grid[i][j] = head->grids[i][j];
     return true;
 }
+
 
